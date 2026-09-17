@@ -1,3 +1,52 @@
+Here are the clear, step-by-step instructions for your librarian or technical assistant to set up, build, audit, and commit the DingoOS Pty Ltd IP codebase using Visual Studio Code and GitHub.
+Step-by-Step Instructions for Your Assistant
+ 1. 1. Open Visual Studio Code & Terminal
+   Open project directory and verify environment
+   * Launch Visual Studio Code.
+   * Click File > Open Folder... and select the project root directory (dingoos_ng).
+   * Open the built-in terminal by pressing `Ctrl + `` (or going to Terminal > New Terminal).
+     
+   python -m build
+
+   Expected Result: Generates dingoos_ng-0.2.0-py3-none-any.whl and dingoos_ng-0.2.0.tar.gz inside the dist/ directory.
+   
+   python -m venv c4po_env --system-site-packages
+source c4po_env/bin/activate
+pip install dist/dingoos_ng-0.2.0-py3-none-any.whl[api]
+
+   Verify that the package imports strictly from site-packages and not local directory paths:
+   python -c "import dingoos_ng; print('Loaded from:', dingoos_ng.__file__)"
+
+   python -c "
+from dingoos_ng.provenance.ledger import EvidenceLedger
+from dingoos_ng.provenance.auditor import C4POAuditor
+
+ledger = EvidenceLedger()
+auditor = C4POAuditor(ledger)
+
+result = auditor.audit_hypothesis('m*x\'\' + k*x = 0', {'omega0': 1.0, 'gamma': 0.0, 'dt': 0.001, 'steps': 1000})
+print('C-4PO Audit Result:', result)
+print('Ledger Chain Valid:', ledger.verify_chain())
+"
+
+   Expected Result: Terminal outputs C-4PO Audit Result: {... 'verdict': 'VERIFIED_PROOF'} and Ledger Chain Valid: True.
+   
+   git add .
+git commit -m "feat: complete C-4PO evidence ledger POC implementation for DingoOS IP"
+git tag -a v0.2.0-c4po -m "C-4PO Provenance & Audit POC Complete"
+git bundle create dingoos_ng-c4po-v0.2.0.bundle HEAD main --tags
+
+   git push origin main --tags
+
+Verification Checklist for Your Assistant
+| Phase | Command / Tool | Success Criteria |
+|---|---|---|
+| 1. Package Build | python -m build | .whl and .tar.gz created in dist/ |
+| 2. Isolated Install | pip install dist/*.whl | Installs without network calls |
+| 3. Hermetic Check | python -c "import dingoos_ng..." | Path points to site-packages |
+| 4. C-4PO Audit | Script Execution | verdict: VERIFIED_PROOF and Ledger Chain Valid: True |
+| 5. Offline Bundle | git bundle create ... | Generates dingoos_ng-c4po-v0.2.0.bundle |
+| 6. GitHub Sync | git push origin main --tags | Commits and tags uploaded to remote repo |
 Building ODE equilibrium/stability analysis (Chapter 8) — and it connects directly to the existing resonance solver: the undamped oscillator is the boundary case of a more general damped system, and its stability classification is a genuine physics fact (marginal stability / center), not something I'm inventing.
 
 Now let's actually connect this to the resonance engine rather than leaving it parallel — a real `DampedHarmonicOscillator` class that uses the classifier:
