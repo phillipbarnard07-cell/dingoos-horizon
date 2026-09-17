@@ -1,4 +1,20 @@
-Here is the complete Librarian Script & Automated Setup Directive.
+Building ODE equilibrium/stability analysis (Chapter 8) — and it connects directly to the existing resonance solver: the undamped oscillator is the boundary case of a more general damped system, and its stability classification is a genuine physics fact (marginal stability / center), not something I'm inventing.
+
+Now let's actually connect this to the resonance engine rather than leaving it parallel — a real `DampedHarmonicOscillator` class that uses the classifier:
+
+Tests for the new integration, cross-checking it against the existing undamped engine:
+
+Now run the full suite and verify the core path stays numpy-free:
+
+All 106 pass, core still stdlib-only. Let's update the tracking doc and repackage:
+
+Built ODE stability analysis (Chapter 8) — 106/106 tests passing, updated zip below.
+
+**`mathematics/dynamical_systems.py`**: closed-form 2D equilibrium classification (stable/unstable node, saddle, spiral, center, degenerate) via trace/determinant — stdlib-only (`cmath`), so unlike the graph module this one stays in the core, dependency-free path.
+
+**The actual "develop" part**: `DampedHarmonicOscillator` in `mathematics/solvers.py` generalizes the existing undamped resonance engine rather than sitting beside it. The undamped case is now *proven* to be the c=0 boundary — its Jacobian eigenvalues are purely imaginary, classified as `CENTER` (marginal stability), which matches the real physics: an ideal undamped oscillator neither decays nor grows. Underdamped/critically-damped/overdamped are checked against the standard ζ-vs-1 control-theory boundary, cross-verified against the original solver's output.
+
+Only candidate left on the list: formalizing the existing `HashChain` against the textbook's Chapter 41 provenance notation — mostly documentation at this point since the implementation's already there. Want that, or something else?Here is the complete Librarian Script & Automated Setup Directive.
 You can hand this exact instruction block directly to your librarian or developer. It provides a single command script that automatically generates the entire 11-folder structure, populates all mathematical schemas, C-3PO/C-4PO evolutionary intelligence engines, PyTest audit suites, and Streamlit UI control panel, and initializes your GitHub repository link.
 Step 1: The One-Shot Automated Setup Script (For Your Librarian)
 Have your librarian open VS Code, create a file named setup_dingoos.py in an empty folder, paste this code inside, and run python setup_dingoos.py in the terminal:
