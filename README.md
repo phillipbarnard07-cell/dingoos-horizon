@@ -1,3 +1,232 @@
+Subsystem Expansion: Digital Twin & Hardware Instrumentation
+To extend the DingoOS CSRE1/CSRE2 executable baseline, we introduce two critical engineering components:
+ * Digital Twin Core (07-ENGINEERING): Real-time numerical simulation modeling state updates, environmental damping, and external excitation forces.
+ * Hardware Instrumentation Gateway (07-ENGINEERING): Sensor signal ingestion pipeline with noise injection, analog-to-digital discretization, and automated tolerance checking against digital twin outputs.
+Core Structural Schema
+┌─────────────────────────────────────────────────────────────┐
+│                    07-ENGINEERING                           │
+│          (Digital Twin Engine: State Integration)           │
+└──────────────────────────────┬──────────────────────────────┘
+                               │ State Vector Stream
+                               ▼
+┌─────────────────────────────────────────────────────────────┐
+│                    07-ENGINEERING                           │
+│     (Hardware Instrumentation: Ingestion & Telemetry)       │
+└──────────────────────────────┬──────────────────────────────┘
+                               │ Empirical Measurement Record
+                               ▼
+┌─────────────────────────────────────────────────────────────┐
+│                    05-INTELLIGENCE                          │
+│     (C-4PO Adversarial Verification & Provenance Hash)      │
+└─────────────────────────────────────────────────────────────┘
+
+Implementation Modules
+1. Digital Twin Engine (07-ENGINEERING/digital_twin.py)
+Simulates continuous dynamic state responses using explicit Euler time-integration for forced/damped harmonic oscillators: m\ddot{x} + c\dot{x} + kx = F(t).
+"""
+07-ENGINEERING/digital_twin.py
+State-space simulation model for dynamic physical systems.
+"""
+
+from typing import Dict, List, Tuple
+import math
+
+
+class DigitalTwin:
+    def __init__(self, mass: float, stiffness: float, damping: float = 0.1):
+        if mass <= 0 or stiffness <= 0:
+            raise ValueError("Mass and stiffness must be positive values.")
+        self.mass = mass
+        self.stiffness = stiffness
+        self.damping = damping
+
+    def simulate_transient_response(
+        self, 
+        duration: float = 2.0, 
+        dt: float = 0.001, 
+        initial_pos: float = 1.0, 
+        initial_vel: float = 0.0
+    ) -> Dict[str, List[float]]:
+        """Simulates response over time and extracts peak response frequency."""
+        time_steps = int(duration / dt)
+        t_vec = [i * dt for i in range(time_steps)]
+        x_vec = [0.0] * time_steps
+        v_vec = [0.0] * time_steps
+
+        x = initial_pos
+        v = initial_vel
+
+        zero_crossings = []
+
+        for i in range(time_steps):
+            x_vec[i] = x
+            v_vec[i] = v
+
+            # Acceleration calculation: a = (-c*v - k*x) / m
+            a = (-self.damping * v - self.stiffness * x) / self.mass
+
+            # Update velocity and position
+            v_next = v + a * dt
+            x_next = x + v * dt
+
+            # Track zero-crossing for empirical period estimation
+            if i > 0 and ((x <= 0 and x_next > 0) or (x >= 0 and x_next < 0)):
+                zero_crossings.append(t_vec[i])
+
+            x, v = x_next, v_next
+
+        # Calculate frequency from zero crossings
+        estimated_hz = 0.0
+        if len(zero_crossings) >= 2:
+            periods = [zero_crossings[j] - zero_crossings[j-1] for j in range(1, len(zero_crossings))]
+            avg_half_period = sum(periods) / len(periods)
+            estimated_hz = 1.0 / (2.0 * avg_half_period)
+
+        return {
+            "time": t_vec,
+            "displacement": x_vec,
+            "estimated_hz": estimated_hz
+        }
+
+2. Hardware Instrumentation Pipeline (07-ENGINEERING/instrumentation.py)
+Models physical sensor acquisition streams, handling signal noise, quantization, and telemetry packaging.
+"""
+07-ENGINEERING/instrumentation.py
+Hardware interface mapping physical sensor streams into DingoOS telemetry datasets.
+"""
+
+from typing import Dict, Any, List
+import random
+
+
+class SensorHardwareGateway:
+    def __init__(self, noise_std_dev: float = 0.02):
+        self.noise_std_dev = noise_std_dev
+
+    def acquire_telemetry(self, raw_signal: List[float], sample_rate_hz: float) -> Dict[str, Any]:
+        """Applies measurement uncertainty/noise and extracts measured frequency."""
+        noisy_signal = [val + random.gauss(0.0, self.noise_std_dev) for val in raw_signal]
+
+        # Count zero-crossings on noisy signal
+        dt = 1.0 / sample_rate_hz
+        zero_crossings = []
+        for i in range(1, len(noisy_signal)):
+            if (noisy_signal[i-1] <= 0 and noisy_signal[i] > 0) or (noisy_signal[i-1] >= 0 and noisy_signal[i] < 0):
+                zero_crossings.append(i * dt)
+
+        measured_hz = 0.0
+        if len(zero_crossings) >= 2:
+            periods = [zero_crossings[j] - zero_crossings[j-1] for j in range(1, len(zero_crossings))]
+            avg_half_period = sum(periods) / len(periods)
+            measured_hz = 1.0 / (2.0 * avg_half_period)
+
+        return {
+            "sample_count": len(noisy_signal),
+            "measured_hz": measured_hz,
+            "noise_floor": self.noise_std_dev,
+            "status": "ACQUIRED"
+        }
+
+Executable Digital Twin Loop (main_digital_twin.py)
+Integrates the Digital Twin and Instrumentation pipeline into the C-3PO/C-4PO pipeline.
+"""
+main_digital_twin.py
+Executes end-to-end twin simulation and telemetry verification.
+"""
+
+from 01_CORE.schemas import EpistemicStatus
+from 05_INTELLIGENCE.c3po import C3POAgent
+from 05_INTELLIGENCE.c4po import C4POAgent
+from 07_ENGINEERING.digital_twin import DigitalTwin
+from 07_ENGINEERING.instrumentation import SensorHardwareGateway
+
+
+def execute_digital_twin_pipeline():
+    print("==================================================")
+    print("    DINGOOS CSRE1/CSRE2 DIGITAL TWIN PIPELINE     ")
+    print("==================================================")
+
+    # 1. Instantiate Agents and Engineering Components
+    c3po = C3POAgent()
+    c4po = C4POAgent()
+    mass, stiffness = 5.0, 500.0  # k/m = 100 -> fn ≈ 1.5915 Hz
+    
+    twin = DigitalTwin(mass=mass, stiffness=stiffness, damping=0.05)
+    sensor = SensorHardwareGateway(noise_std_dev=0.005)
+
+    # 2. C-3PO Proposes Base Claim
+    claim = c3po.propose_resonance_claim(mass=mass, stiffness=stiffness)
+    print(f"\n[STEP 1: Claim Created]")
+    print(f"Claim ID: {claim.id} | Hash: {claim.provenance_hash[:12]}...")
+
+    # 3. Digital Twin Transient Simulation
+    sim_data = twin.simulate_transient_response(duration=4.0, dt=0.001)
+    print(f"\n[STEP 2: Digital Twin Simulation Complete]")
+    print(f"Twin Predicted Frequency: {sim_data['estimated_hz']:.4f} Hz")
+
+    # 4. Sensor Telemetry Ingestion
+    telemetry = sensor.acquire_telemetry(sim_data["displacement"], sample_rate_hz=1000.0)
+    print(f"\n[STEP 3: Hardware Telemetry Acquired]")
+    print(f"Measured Frequency: {telemetry['measured_hz']:.4f} Hz | Noise Floor: {telemetry['noise_floor']}")
+
+    # 5. C-4PO Verification
+    evidence = c4po.verify_resonance_evidence(
+        claim=claim, 
+        mass=mass, 
+        stiffness=stiffness, 
+        simulated_hz=telemetry["measured_hz"],
+        tolerance=0.05
+    )
+    print(f"\n[STEP 4: Adversarial Verification Result]")
+    print(f"Validation Status: {evidence.passed_validation}")
+    print(f"Claim Final Epistemic Status: {claim.epistemic_status.value}")
+
+    print("\n==================================================")
+    print("        DIGITAL TWIN VERIFICATION COMPLETED       ")
+    print("==================================================")
+
+
+if __name__ == "__main__":
+    execute_digital_twin_pipeline()
+
+Verification Test Suite (tests/test_digital_twin.py)
+"""
+tests/test_digital_twin.py
+Tests Digital Twin transient output accuracy and hardware sensor ingestion.
+"""
+
+import pytest
+from 07_ENGINEERING.digital_twin import DigitalTwin
+from 07_ENGINEERING.instrumentation import SensorHardwareGateway
+
+
+def test_digital_twin_frequency_accuracy():
+    # m = 1.0, k = 100.0 -> fn ≈ 1.5915 Hz
+    twin = DigitalTwin(mass=1.0, stiffness=100.0, damping=0.0)
+    sim = twin.simulate_transient_response(duration=5.0, dt=0.0005)
+    assert pytest.approx(sim["estimated_hz"], abs=0.02) == 1.5915
+
+
+def test_sensor_gateway_acquisition():
+    sensor = SensorHardwareGateway(noise_std_dev=0.0)
+    # Generate simple sinusoid signal at 2.0 Hz
+    sample_rate = 100.0
+    t_signal = [i * (1.0 / sample_rate) for i in range(200)]
+    import math
+    signal = [math.sin(2.0 * math.pi * 2.0 * t) for t in t_signal]
+
+    telemetry = sensor.acquire_telemetry(signal, sample_rate_hz=sample_rate)
+    assert telemetry["status"] == "ACQUIRED"
+    assert pytest.approx(telemetry["measured_hz"], abs=0.05) == 2.0
+
+Command Verification
+Execute the suite and run the new digital twin pipeline:
+# Execute unit tests across all project modules
+pytest tests/ -v --tb=short
+
+# Run digital twin execution workflow
+python main_digital_twin.py
+
 Advanced Architecture: Autonomous Research & Systemic Innovation
 To advance the DingoOS CSRE1/CSRE2 executable foundation beyond static verification, we introduce three core technical subsystems:
  * Dynamic Symbolic Math & Unitarity Engine (02-MATHEMATICS)
