@@ -3318,3 +3318,9 @@ DingoOS Pty Ltd — Unified Research &amp; Innovation Frontend POC v1. Standalon
 ## Governed Horizon boundary
 
 This public repository now documents the additive Governed Horizon Contract v1.0 and Power & Authority UI Contract v1.0. Horizon remains a contract boundary: it may display governed epistemic, safety and authorization state but must not expose private backend implementation, secrets, protected IP or unrestricted control. Capability, confidence, consensus and cryptographic integrity are never presented as authorization or scientific truth.
+
+## Alpha–Beta–Gamma public domain boundary
+
+Horizon implements the **Alpha** front-end/input domain. The protected DingoOS backend implements **Beta**. Background studies, hypotheses, theories, prior evidence and competing explanations form **Gamma**. The public UI therefore presents governed projections rather than private implementation.
+
+See [Alpha–Beta–Gamma Public Domain Contract](docs/ALPHA_BETA_GAMMA_PUBLIC_DOMAIN_CONTRACT_V1.0.md).
