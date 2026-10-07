@@ -1,18 +1,25 @@
 # DingoOS Advanced Systems — Public Overview
 
-This repository contains the public Horizon-facing overview of three DingoOS research programs:
+This repository contains the public Horizon-facing overview of DingoOS research programs:
 
 - E-HOVER-01 — hovering electric vehicle
 - E-MOTO-01 — hovering electric motorcycle
 - D-REP-01 — programmable fabrication / replicator research
+- NMI-01 — neuro-mechanical interface
+- NMI-01-B2B — neural user-to-user communication research
+- BIO-01 — biometrics intelligence and identity assurance
 
 ## Public boundary
 
-This repository must contain only public-safe interfaces and claims. Private IP, credentials, secrets, internal implementation details and restricted research data must remain outside the public Horizon surface.
+This repository contains only public-safe interfaces and claims. Private IP, credentials, secrets, internal implementation details, raw biometric/neural data and restricted research data must remain outside the public Horizon surface.
+
+BIO-01 is a research/engineering program for legitimate identity verification, authentication, liveness and human-state assurance. It does not claim infallible identity, unrestricted surveillance, mind reading or automatic authorization.
 
 ## Epistemic status
 
-These are engineering/research programs. A blueprint is not proof of feasibility, and simulation is not physical validation.
+A blueprint is not proof of feasibility, and simulation is not physical validation.
+
+Biometric observation, identity inference and authorization are separate states. High-confidence biometric matching must not silently authorize consequential external action.
 
 All advancement follows:
 
@@ -22,4 +29,4 @@ All advancement follows:
 
 Design decisions remain revisable. New evidence, contradictions, safety findings and engineering results can change a design without restarting the DingoOS architecture.
 
-See the canonical engineering blueprints in the private DingoOS repository.
+See the canonical engineering blueprints in the DingoOS repository.
