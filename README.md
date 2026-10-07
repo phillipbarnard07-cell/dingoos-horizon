@@ -3313,3 +3313,8 @@ if __name__ == "__main__":
 
 # dingoos-horizon
 DingoOS Pty Ltd — Unified Research &amp; Innovation Frontend POC v1. Standalone GitHub Pages deployment. Complete UI shell with local mock data.
+
+
+## Governed Horizon boundary
+
+This public repository now documents the additive Governed Horizon Contract v1.0 and Power & Authority UI Contract v1.0. Horizon remains a contract boundary: it may display governed epistemic, safety and authorization state but must not expose private backend implementation, secrets, protected IP or unrestricted control. Capability, confidence, consensus and cryptographic integrity are never presented as authorization or scientific truth.
